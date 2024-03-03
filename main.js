@@ -70,7 +70,7 @@ async function createNewFreeKey(
             `FREE ${new Date().toLocaleDateString("ru-RU")} ${liveDays}`,
         ))
     var userChanged = await outlinevpn.getUser(user.id)
-    return status ? userChanged : user
+    return userChanged
 }
 
 async function sendKey(
@@ -104,11 +104,15 @@ async function sendKey(
     }
 }
 
+cron.validate(config.keyCreateCron) ? undefined : console.error("Invalid key create expression")
 cron.schedule(config.keyCreateCron, async () => {
-    var freeKeys = await getAllFreeKeys()
-    await createNewFreeKey()
-    key = freeKeys[freeKeys.length - 1]
-    for (var j in config.channelIDs) {
-        sendKey(config.channelIDs[j], key, config.subscribeLink)
+    try {
+        var key = await createNewFreeKey()
+        console.log(key)
+        for (var i in config.channelIDs) {
+            sendKey(config.channelIDs[i], key, config.subscribeLink)
+        }
+    } catch (err) {
+        console.log(err)
     }
 })
