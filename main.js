@@ -126,10 +126,7 @@ var i = 0
 cron.schedule(config.keyCreateCron, async () => {
     await checkKeysCount()
     for (var j in config.channelIDs) {
-        sendKey(config.channelIDs[j], freeKeys[i], {
-            text: "Купить VPN",
-            link: "https://t.me/protectpulsebot?start=fc1",
-        })
+        sendKey(config.channelIDs[j], freeKeys[i], config.subscribeLink)
     }
     if (i >= freeKeys.length - 1) console.log("End of keys list")
     i = i < freeKeys.length - 1 ? i + 1 : 0

@@ -5,6 +5,11 @@
         "limit": 10 // key data limit (in GB)
     },
     "keyCreateCron": "0 * * * *", // key create cron expression (https://crontab.guru)
+    "subscribeLink": {
+        // visual text and link in the bottom of the post
+        "text": "Купить VPN",
+        "link": "https://t.me/telegavpn_bot?start=123"
+    },
     "countries": {
         // contry names by 2-letter code
         "DE": "🇩🇪 Германия",
