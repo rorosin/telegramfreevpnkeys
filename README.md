@@ -1,6 +1,7 @@
 # Бот для каналов с бесплатными VPN ключами
 
 ## Установка
+- Скачайте файлы проекта - `git clone https://github.com/rorosin/telegramfreevpnkeys.git && cd telegramfreevpnkeys`
 - Переименуйте `.env.example` в `.env`
 - Получите `apiUrl` и `certSha256` из `/opt/outline/access.txt` на вашем сервере и вставьте их в `.env`
 - Создайте бота в [BotFather](https://t.me/botfather/) и вставьте токен в `.env`
