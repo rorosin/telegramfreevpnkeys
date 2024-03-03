@@ -36,7 +36,7 @@ async function getAllFreeKeys() {
         if (user.name.includes("FREE")) {
             var createDate = Date.parse(user.name.split(" ")[1])
             var expiresAfter_days = Number(user.name.split(" ")[2])
-            freeKeys.push({
+            var key = {
                 id: user.id,
                 country: user.accessUrl
                     .split("@")[1]
@@ -50,7 +50,9 @@ async function getAllFreeKeys() {
                 expiresAfter_days: isNaN(expiresAfter_days)
                     ? undefined
                     : expiresAfter_days,
-            })
+            }
+            freeKeys.push(key)
+            // console.log(key)
         }
     }
     return freeKeys
@@ -102,32 +104,11 @@ async function sendKey(
     }
 }
 
-async function checkKeysCount() {
-    if (config.freeKeysCount == -1) {
-        await createNewFreeKey()
-        return
-    }
-    var allFreeKeys = await getAllFreeKeys()
-    if (allFreeKeys.length < config.freeKeysCount) {
-        const keysToCreate = config.freeKeysCount - allFreeKeys.length
-        for (let i = 0; i < keysToCreate; i++) {
-            await createNewFreeKey()
-        }
-    } else if (allFreeKeys.length > config.freeKeysCount) {
-        while (allFreeKeys.length > config.freeKeysCount) {
-            outlinevpn.deleteUser(allFreeKeys[0].id)
-            var allFreeKeys = await getAllFreeKeys()
-        }
-    }
-}
-
-const freeKeys = await getAllFreeKeys()
-var i = 0
 cron.schedule(config.keyCreateCron, async () => {
-    await checkKeysCount()
+    var freeKeys = await getAllFreeKeys()
+    await createNewFreeKey()
+    key = freeKeys[freeKeys.length - 1]
     for (var j in config.channelIDs) {
-        sendKey(config.channelIDs[j], freeKeys[i], config.subscribeLink)
+        sendKey(config.channelIDs[j], key, config.subscribeLink)
     }
-    if (i >= freeKeys.length - 1) console.log("End of keys list")
-    i = i < freeKeys.length - 1 ? i + 1 : 0
 })

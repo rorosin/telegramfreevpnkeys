@@ -1,5 +1,4 @@
 {
-    "freeKeysCount": -1, // how many keys automatically create on server (set to -1 to create new key every time)
     "keyConfig": {
         "expiresAfter_days": 1, // how many days key will work
         "limit": 10 // key data limit (in GB)
