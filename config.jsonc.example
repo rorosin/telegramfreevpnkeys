@@ -19,7 +19,7 @@
         "link": "https://t.me/telegavpn_bot?start=123"
     },
     "countries": {
-        // contry text by server IP/domain
+        // country text by server IP/domain
         "vpn.abc.com": "🇩🇪 Германия",
         "12.34.56.78": "🇸🇪 Швеция"
     },
