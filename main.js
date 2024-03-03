@@ -28,32 +28,33 @@ try {
     console.error(err.message)
 }
 
+async function formatKey(user) {
+    if (user.name.includes("FREE ")) {
+        var createDate = Date.parse(user.name.split(" ")[1])
+        var expiresAfter_days = Number(user.name.split(" ")[2])
+        var key = {
+            id: user.id,
+            country: user.accessUrl.split("@")[1].split(".")[0].toUpperCase(),
+            limit: user.dataLimit?.bytes / 1_000_000_000,
+            url: user.accessUrl,
+            created: isNaN(createDate)
+                ? undefined
+                : new Date(createDate).toLocaleDateString("ru-RU"),
+            expiresAfter_days: isNaN(expiresAfter_days)
+                ? undefined
+                : expiresAfter_days,
+        }
+        console.log(key)
+        return key
+    }
+}
+
 async function getAllFreeKeys() {
     var users = await outlinevpn.getUsers()
     var freeKeys = []
     for (var i in users) {
         var user = users[i]
-        if (user.name.includes("FREE")) {
-            var createDate = Date.parse(user.name.split(" ")[1])
-            var expiresAfter_days = Number(user.name.split(" ")[2])
-            var key = {
-                id: user.id,
-                country: user.accessUrl
-                    .split("@")[1]
-                    .split(".")[0]
-                    .toUpperCase(),
-                limit: user.dataLimit?.bytes / 1_000_000_000,
-                url: user.accessUrl,
-                created: isNaN(createDate)
-                    ? undefined
-                    : new Date(createDate).toLocaleDateString("ru-RU"),
-                expiresAfter_days: isNaN(expiresAfter_days)
-                    ? undefined
-                    : expiresAfter_days,
-            }
-            freeKeys.push(key)
-            // console.log(key)
-        }
+        freeKeys.push(formatKey(user))
     }
     return freeKeys
 }
@@ -107,8 +108,7 @@ async function sendKey(
 cron.validate(config.keyCreateCron) ? undefined : console.error("Invalid key create expression")
 cron.schedule(config.keyCreateCron, async () => {
     try {
-        var key = await createNewFreeKey()
-        console.log(key)
+        var key = await formatKey(await createNewFreeKey())
         for (var i in config.channelIDs) {
             sendKey(config.channelIDs[i], key, config.subscribeLink)
         }
