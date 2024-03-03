@@ -1,7 +1,12 @@
+import {jsonc} from "jsonc"
+import * as fs from "node:fs/promises"
+
 import {OutlineVPN} from "outlinevpn-api"
 import dotenv from "dotenv"
 
 import {Telegraf} from "telegraf"
+
+import cron from "node-cron"
 
 dotenv.config()
 
@@ -12,10 +17,15 @@ const outlinevpn = new OutlineVPN({
 
 const bot = new Telegraf(process.env.TELEGRAM_API_TOKEN)
 
-const countries = {
-    IT: "🇮🇹 Италия",
-    DE: "🇩🇪 Германия",
-    SE: "🇸🇪 Швеция",
+var config = {}
+try {
+    config = jsonc.parse(
+        await fs.readFile(new URL("./config.jsonc", import.meta.url), {
+            encoding: "utf-8",
+        }),
+    )
+} catch (err) {
+    console.error(err.message)
 }
 
 async function getAllFreeKeys() {
@@ -27,6 +37,7 @@ async function getAllFreeKeys() {
             var createDate = Date.parse(user.name.split(" ")[1])
             var expiresAfter_days = Number(user.name.split(" ")[2])
             freeKeys.push({
+                id: user.id,
                 country: user.accessUrl
                     .split("@")[1]
                     .split(".")[0]
@@ -45,7 +56,10 @@ async function getAllFreeKeys() {
     return freeKeys
 }
 
-async function createNewFreeKey(limit = 25, liveDays = 1) {
+async function createNewFreeKey(
+    limit = config.keyConfig.limit,
+    liveDays = config.keyConfig.expiresAfter_days,
+) {
     var user = await outlinevpn.createUser()
     var status =
         (await outlinevpn.addDataLimit(user.id, limit * 1_000_000_000)) &&
@@ -65,7 +79,7 @@ async function sendKey(
     try {
         await bot.telegram.sendMessage(
             chatID,
-            `${countries[key.country]} | ${
+            `${config.countries[key.country]} | ${
                 isNaN(key.limit) ? "Безлимит" : "Лимит " + key.limit + " ГБ"
             }${
                 isNaN(key.expiresAfter_days)
@@ -88,11 +102,35 @@ async function sendKey(
     }
 }
 
-// console.log(await createNewFreeKey())
+async function checkKeysCount() {
+    if (config.freeKeysCount == -1) {
+        await createNewFreeKey()
+        return
+    }
+    var allFreeKeys = await getAllFreeKeys()
+    if (allFreeKeys.length < config.freeKeysCount) {
+        const keysToCreate = config.freeKeysCount - allFreeKeys.length
+        for (let i = 0; i < keysToCreate; i++) {
+            await createNewFreeKey()
+        }
+    } else if (allFreeKeys.length > config.freeKeysCount) {
+        while (allFreeKeys.length > config.freeKeysCount) {
+            outlinevpn.deleteUser(allFreeKeys[0].id)
+            var allFreeKeys = await getAllFreeKeys()
+        }
+    }
+}
+
 const freeKeys = await getAllFreeKeys()
-console.log(freeKeys)
-// sendKey("-1002023559139", freeKeys[0])
-sendKey("946602610", freeKeys[0], {
-    text: "Купить VPN",
-    link: "https://t.me/protectpulsebot?start=fc1",
+var i = 0
+cron.schedule(config.keyCreateCron, async () => {
+    await checkKeysCount()
+    for (var j in config.channelIDs) {
+        sendKey(config.channelIDs[j], freeKeys[i], {
+            text: "Купить VPN",
+            link: "https://t.me/protectpulsebot?start=fc1",
+        })
+    }
+    if (i >= freeKeys.length - 1) console.log("End of keys list")
+    i = i < freeKeys.length - 1 ? i + 1 : 0
 })

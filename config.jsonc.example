@@ -1,0 +1,14 @@
+{
+    "freeKeysCount": -1, // how many keys automatically create on server (set to -1 to create new key every time)
+    "keyConfig": {
+        "expiresAfter_days": 1, // how many days key will work
+        "limit": 10 // key data limit (in GB)
+    },
+    "keyCreateCron": "0 * * * *", // key create cron expression (https://crontab.guru)
+    "countries": {
+        // contry names by 2-letter code
+        "DE": "🇩🇪 Германия",
+        "SE": "🇸🇪 Швеция"
+    },
+    "channelIDs": [] // channel chatIDs (forward message from channel to https://t.me/getmyid_bot to get ID)
+}

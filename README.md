@@ -7,4 +7,5 @@
 - Создайте бота в [BotFather](https://t.me/botfather/) и вставьте токен в `.env`
 - [Установите](https://nodejs.org/en/download) NodeJS и NPM, если у вас их нет
 - Установите зависимости с помощью `npm i`
+- Переименуйте `config.jsonc.example` в `config.jsonc` и настройте бота в этом файле
 - Запустите проект - `npm run start`
