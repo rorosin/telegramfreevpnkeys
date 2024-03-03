@@ -9,14 +9,6 @@ import {Telegraf} from "telegraf"
 import cron from "node-cron"
 
 dotenv.config()
-
-const outlinevpn = new OutlineVPN({
-    apiUrl: process.env.OUTLINE_API_URL,
-    fingerprint: process.env.OUTLINE_API_FINGERPRINT,
-})
-
-const bot = new Telegraf(process.env.TELEGRAM_API_TOKEN)
-
 var config = {}
 try {
     config = jsonc.parse(
@@ -28,13 +20,15 @@ try {
     console.error(err.message)
 }
 
+const bot = new Telegraf(process.env.TELEGRAM_API_TOKEN)
+
 async function formatKey(user) {
     if (user.name.includes("FREE ")) {
         var createDate = Date.parse(user.name.split(" ")[1])
         var expiresAfter_days = Number(user.name.split(" ")[2])
         var key = {
             id: user.id,
-            country: user.accessUrl.split("@")[1].split(".")[0].toUpperCase(),
+            country: user.accessUrl.split("@")[1].split(":")[0],
             limit: user.dataLimit?.bytes / 1_000_000_000,
             url: user.accessUrl,
             created: isNaN(createDate)
@@ -49,7 +43,7 @@ async function formatKey(user) {
     }
 }
 
-async function getAllFreeKeys() {
+async function getAllFreeKeys(outlinevpn) {
     var users = await outlinevpn.getUsers()
     var freeKeys = []
     for (var i in users) {
@@ -60,6 +54,7 @@ async function getAllFreeKeys() {
 }
 
 async function createNewFreeKey(
+    outlinevpn,
     limit = config.keyConfig.limit,
     liveDays = config.keyConfig.expiresAfter_days,
 ) {
@@ -105,14 +100,24 @@ async function sendKey(
     }
 }
 
-cron.validate(config.keyCreateCron) ? undefined : console.error("Invalid key create expression")
+var servers = config.env.outlineServers
+var serverIter = 0
+cron.validate(config.keyCreateCron)
+    ? undefined
+    : console.error("Invalid key create expression")
 cron.schedule(config.keyCreateCron, async () => {
+    const server = new OutlineVPN({
+        apiUrl: servers[serverIter].url,
+        fingerprint: servers[serverIter].cert,
+    })
     try {
-        var key = await formatKey(await createNewFreeKey())
+        var key = await formatKey(await createNewFreeKey(server))
         for (var i in config.channelIDs) {
+            console.log(key)
             sendKey(config.channelIDs[i], key, config.subscribeLink)
         }
     } catch (err) {
         console.log(err)
     }
+    serverIter = serverIter < servers.length - 1 ? serverIter + 1 : 0
 })
