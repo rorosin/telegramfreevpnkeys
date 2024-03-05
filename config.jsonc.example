@@ -9,8 +9,9 @@
         ]
     },
     "keyConfig": {
-        "expiresAfter_days": 1, // how many days key will work
-        "limit": 10 // key data limit (in GB)
+        "expiresAfter_days": 1, // how many days key will work (auto deleting is not implemented yet)
+        "limit": 10, // key data limit (in GB)
+        "name": "t.me/telegavpn_bot"  // this name will be automatically set to key in Outline Client ($COUNTRY will be replaced with country name)
     },
     "keyCreateCron": "0 * * * *", // key create cron expression (https://crontab.guru)
     "subscribeLink": {

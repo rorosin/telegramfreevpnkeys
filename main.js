@@ -73,8 +73,13 @@ async function sendKey(
     chatID,
     key,
     subscribeLink = {text: "Subscribe", link: "https://t.me/telegavpn_bot"},
+    autoName = "",
 ) {
     try {
+        var keyAutoName = autoName?.replace(
+            "$COUNTRY",
+            config.countries[key.country],
+        )
         await bot.telegram.sendMessage(
             chatID,
             `${config.countries[key.country]} | ${
@@ -83,7 +88,7 @@ async function sendKey(
                 isNaN(key.expiresAfter_days)
                     ? ""
                     : " | Действует " + key.expiresAfter_days + " дн."
-            }\n<code>${key.url}</code>${
+            }\n<code>${key.url}${autoName ? "#" + keyAutoName : ""}</code>${
                 subscribeLink && subscribeLink.text && subscribeLink.link
                     ? '\n\n<a href="' +
                       subscribeLink.link +
@@ -112,9 +117,14 @@ cron.schedule(config.keyCreateCron, async () => {
     })
     try {
         var key = await formatKey(await createNewFreeKey(server))
+        console.log(key)
         for (var i in config.channelIDs) {
-            console.log(key)
-            sendKey(config.channelIDs[i], key, config.subscribeLink)
+            sendKey(
+                config.channelIDs[i],
+                key,
+                config.subscribeLink,
+                config.keyConfig.name,
+            )
         }
     } catch (err) {
         console.log(err)
